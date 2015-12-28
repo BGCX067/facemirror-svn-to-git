@@ -1,0 +1,6 @@
+rpcset DummyLogic{
+ c ping(int client_vers[16], char client_name[24])
+ c ping2(int client_ver, char client_name[24])
+ s pong(int server_ver, char hello_string[64])
+ s pong2(int server_ver, char hello_string[64])
+}

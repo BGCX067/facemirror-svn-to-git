@@ -1,0 +1,28 @@
+Introduction:
+
+	Face is a network library enables developer to concentrate on
+	logic based on RPC rather than the low level network functions.
+
+
+Installation:
+
+	Please refer to INSTALL.
+
+Content:
+
+	/libface
+		Source directory for Face library.
+	
+	/face2cpp
+	    Utility to 'compile' the face protocol file into C++ source.
+
+	/sample
+	  /server
+	  /client
+	  /protocol
+	    A sample to illustrate how Face works.
+
+Support:
+	Please visit face homepage:
+
+	https://sourceforge.net/projects/theface

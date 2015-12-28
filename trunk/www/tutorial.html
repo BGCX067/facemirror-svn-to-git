@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="face.css" />
+<title>FACE tutorial</title>
+</head>
+<body>
+<a name="top"></a>
+
+<div id="header">
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=214773&amp;type=5" width="210" height="62" border="0" alt="SourceForge.net Logo" /></a>
+</div>
+<ul id="nav">
+<li><a href="index.html">Home</a></li>
+    <li><a href="#">tutorial</a></li>
+    <li><a href="http://sourceforge.net/project/showfiles.php?group_id=214773">download</a></li>
+    <li><a href="https://sourceforge.net/forum/forum.php?forum_id=774177">Support</a></li>
+<!--     <li><a href="manual/index.html">manual</a></li> -->
+</ul>
+<div id="content">
+ <h1 id="mainTitle">FACE tutorial</h1>
+ <h2>Scenario</h2>
+  <p>
+    Server starts up and listen on port 9527, client will connect to
+    server and send predefined RPC 'ping' with parameters: client
+    version(int) and client name(char array), server will reply server
+    version.
+  </p>
+ <h2>Steps</h2>
+ <h3>0. Install FACE</h3>
+ <h4>face2cpp</h4>
+ <p>
+	Face protocol 'compiler', require lex&yacc support. For Linux,
+	with these 2 tools installed, go to /face2cpp directory:
+ </p>
+ <pre class="code">
+somebody@localhost theface/face2cpp$ make </pre>
+
+ <p>
+	This will produce the utility 'face2cpp'
+	Win32 version for face2cpp is not provided yet, but could be walk
+	around easily with flex and bison windows version.
+ </p>
+ <h4>libface</h4>
+
+ <p>
+	<b>Linux:</b>
+
+	Type 'make' in libface directory, be sure the libevent is
+	installed into system.
+ </p>
+
+ <pre class="code">
+somebody@localhost theface/face2cpp$ make </pre>
+
+ <p>
+	<b>Windows:</b>
+
+	At 2008-01-16, the latest libevent port for WIN32 is version 1.1a,
+	the Visual C++ library "libevent.lib" and "event.h" are both
+	packed in the libface directory. Just use 'face.sln' to compile
+	under Visual C++, this will produce face.lib for WIN32 environment.
+ </p>
+ <h3>1. Define the RPC</h3>
+   <p>
+     According to the scenario above, we wrote the following RPC
+     description. Let's call it 'face protocol'. Resvered words are
+     marked <span class="reservedWords">blue</span>.
+   </p>
+   <pre class="code">
+<span class="reservedWords">rpcset</span> Sample{
+  <span class="reservedWords">c</span> ping(<span class="reservedWords">int</span> client_version, <span class="reservedWords">char</span> client_name[16])
+  <span class="reservedWords">s</span> pong(<span class="reservedWords">int</span> server_version)
+}   </pre>
+   <p>
+     Save it to as "sample.face"
+   </p>
+ <h3>2. Compile the protocol</h3>
+   <p>
+     Since we have the face 'compiler': <b>face2cpp</b> at step 0, now
+     we are able to 'compile' the RPC definition into C++ source:
+   </p>
+   <pre class="code">
+somebody@localhost theface/sample/protocol$ ../../face2cpp/face2cpp -f sample.face   </pre>
+   
+   <p> 
+     This will produce C++ source file:
+   </p>
+
+   <pre class="code">
+sample_srv.h
+sample_srv.cpp
+sample_cli.h
+sample_cli.cpp   </pre>
+   <p>
+     Files above contain 2 class: <i>SampleS</i> and <i>SampleC</i>,
+     those are RPC protocol described in C++, to be separately apply
+     for server and client. 
+   </p>
+  <h3>3. Make server</h3>
+  <p>
+    server.cpp is very simple:
+  </p>
+<pre class="code">
+Face&lt;<i>SampleS</i>&gt; f;  <span class="comment">// Declare what protocol to use</span>
+
+<span class="reservedWords">int main</span>(<span class="reservedWords">int</span> argc, <span class="reservedWords">char</span> **argv){
+    <span class="reservedWords">if</span>(2 != argc){
+        usage();
+        <span class="reservedWords">exit</span>(0);
+    }
+
+    f.listen_to(atoi(argv[1]),  <span class="comment">// port</span>
+                10,             <span class="comment">// max_connection</span>
+                1024            <span class="comment">// buffer</span>
+        );
+
+    <span class="reservedWords">while</span>(1)
+        f.smile();
+
+    <span class="reservedWords">return</span> 0;
+}</pre>  
+  <h3>4. Make client</h3>
+  <p>
+    Client contains a little more:
+  </p>
+<pre class="code">
+<span class="reservedWords">int main</span>(<span class="reservedWords">int</span> argc, <span class="reservedWords">char</span> **argv){
+    if(3 != argc){
+        usage();
+        <span class="reservedWords">exit</span>(0);
+    }
+
+    Face&lt;SampleC&gt; f; <span class="comment">// Here is the client logic</span>
+
+    f.set_connect_param(10,             <span class="comment">// max_connection</span>
+                        1024            <span class="comment">// buffer</span>
+        );
+
+    Connection *c = f.connect_to(argv[1], atoi(argv[2]));
+
+    <span class="reservedWords">char</span> client_name[] = "NO 1 client";
+
+    f._logic->ping(c, 1, client_name, <span class="reservedWords">sizeof</span>(client_name)); <span class="comment">// send ping to server</span>
+
+    <span class="reservedWords">while</span>(1)
+        f.smile(); <span class="comment">// smile(), aka heartbeat(), flushing network I/O buffers</span>
+
+    <span class="reservedWords">return</span> 0;
+}   </pre>
+  <h3>5. Fill in the logic</h3>
+  <p>
+    The files we generated above:
+  </p>
+   <pre class="code">
+sample_srv.h
+sample_srv.cpp   </pre>
+  <p>
+    Will be compiled with server.cpp. Header files contain all the
+    dull work we don't wanna do like setup the socket and handle the
+    buffer, so we leave them alone. In .cpp file, let's fill in the
+    logic we want our program to behave.
+  </p>
+  <p>
+    server: what to do when ping() arrived from client, face2cpp
+    already generated the function for us with the name:
+    ping_on_receive(), All we need to do is reply pong() with server
+    version, here we assume server version is 2008:
+  </p>
+<pre class="code">
+sample_srv.cpp:
+<span class="reservedWords">int</span> SampleS::ping_on_receive(Connection *c,
+                             <span class="reservedWords">int</span> client_version,
+                             <span class="reservedWords">char</span> *client_name, 
+                             <span class="reservedWords">int</span> client_name_len){
+    f._logic-&gt;pong(c, 2008);                          
+    <span class="reservedWords">return</span> 0;
+};</pre>
+<p>
+  All client need to do is display the server version when server
+  replies client's ping() with pong():
+</p>
+<pre class="code">
+sample_cli.cpp:
+<span class="reservedWords">int</span> SampleS::pong_on_receive(Connection *c, <span class="reservedWords">int</span> server_version){
+    cout&lt;&lt;&quot;server version: &quot;&lt;&lt;server_version&lt;&lt;endl;
+    <span class="reservedWords">return</span> 0;
+};</pre>
+ <h3>6. Build!</h3>
+<p> Here is server side Makefile, client is similar:</p>
+<pre class="code">
+FACEPROTOCOL=../protocol/sample.face
+CXX=g++
+FACECC=../../face2cpp/face2cpp
+FACESRC=sample_srv.cpp
+FACEHEADER=sample_srv.h
+SRC=$(wildcard *.cpp)
+OBJ=$(patsubst %.cpp,%.o,$(SRC))
+LIBS=-ll -levent -L../../libface
+CXXFLAGS=-g -I../../libface 
+FACEFLAGS=-s
+FACELIB=../../libface/libface.a
+PROG=sample_srv
+
+all: $(PROG)
+
+$(PROG): $(OBJ)
+	$(CXX) $(OBJ) $(LIBS) $(FACELIB) $(CXXFLAGS) -o $(PROG)
+
+p: $(FACEPROTOCOL)
+	$(FACECC) $(FACEFLAGS) -f $(FACEPROTOCOL)
+
+clean:
+	rm -f *.o
+	rm -f *~
+	rm -f $(FACESRC) $(FACEHEADER)
+	rm -f $(PROG)</pre>
+<p> Steps 0-5 are used to demonstrate what FACE workflow is. Actual work is simple with this Makefile:</p>
+<pre class="code">
+somebody@localhost theface/sample/server$ make p
+somebody@localhost theface/sample/server$ make</pre>
+
+<p> 'make p' will generate the relevant C++ source file, and make will
+do the rest.</p>
+
+ <h3>7. Test drive</h3>
+ <p> Start server at port 9527:</p>
+<pre class="code">
+somebody@localhost theface/sample/server$ ./simple_srv 9527</pre>
+ <p> connect to server:</p>
+<pre class="code">
+somebody@localhost theface/sample/client$ ./simple_cli 192.168.1.1 9527</pre>
+
+Have fun! <a href="#top">Return to top</a>
+</div>
+<div id="footer">
+<p>Last update: 2008-01-19 02:50:23 Sat, By Blair Craft</p>
+</div>
+
+</body>
+</html>

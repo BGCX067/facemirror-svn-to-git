@@ -1,0 +1,41 @@
+Prerequisite:
+
+    libevent:
+	http://monkey.org/~provos/libevent/
+
+	lex&yacc(flex&bison):
+	  Linux distribution should have these tools.
+	  Win32:
+		http://gnuwin32.sourceforge.net/packages/flex.htm
+		http://gnuwin32.sourceforge.net/packages/bison.htm
+
+Install:
+	
+/face2cpp
+	
+	Face protocol 'compiler', require lex&yacc support. For Linux,
+	with these 2 tools installed, go to /face2cpp directory:
+
+	somebody@localhost theface/face2cpp$ make
+
+	This will produce the utility 'face2cpp'
+
+	Win32 version for face2cpp is not provided yet, but could be walk
+	around easily with flex and bison windows version.
+
+/libface
+
+	Linux:
+
+	Type 'make' in libface directory, be sure the libevent is
+	installed into system.
+
+	somebody@localhost theface/face2cpp$ make
+
+	Windows:
+
+	At 2008-01-16, the latest libevent port for WIN32 is version 1.1a,
+	the Visual C++ library "libevent.lib" and "event.h" are both
+	packed in the libface directory. Just use 'face.sln' to compile
+	under Visual C++, this will produce face.lib for WIN32 environment.
+	
